@@ -246,14 +246,59 @@
 
     <script>
         let currentAnswer = '';
-        let correctAnswer = 0;
+        let correctAnswer = 42;
         let currentQuestion = { a: 6, b: 7 };
+        let previousQuestion = { a: 0, b: 0 };
         let stats = { correct: 0, incorrect: 0, total: 1 };
+        
+        // 創建音效
+        const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        
+        function playBeep(frequency, duration, type = 'sine') {
+            const oscillator = audioContext.createOscillator();
+            const gainNode = audioContext.createGain();
+            
+            oscillator.connect(gainNode);
+            gainNode.connect(audioContext.destination);
+            
+            oscillator.frequency.setValueAtTime(frequency, audioContext.currentTime);
+            oscillator.type = type;
+            
+            gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+            gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + duration);
+            
+            oscillator.start(audioContext.currentTime);
+            oscillator.stop(audioContext.currentTime + duration);
+        }
+        
+        function playKeySound() {
+            playBeep(800, 0.1);
+        }
+        
+        function playCorrectSound() {
+            // 播放成功音效（上升音調）
+            playBeep(523, 0.2); // C5
+            setTimeout(() => playBeep(659, 0.2), 100); // E5
+            setTimeout(() => playBeep(784, 0.3), 200); // G5
+        }
+        
+        function playIncorrectSound() {
+            // 播放錯誤音效（下降音調）
+            playBeep(400, 0.3, 'sawtooth');
+            setTimeout(() => playBeep(300, 0.3, 'sawtooth'), 150);
+        }
 
         function generateQuestion() {
             const numbers = [6, 7, 8, 9];
-            const a = numbers[Math.floor(Math.random() * numbers.length)];
-            const b = numbers[Math.floor(Math.random() * numbers.length)];
+            let a, b;
+            
+            // 確保新題目與前一題不同
+            do {
+                a = numbers[Math.floor(Math.random() * numbers.length)];
+                b = numbers[Math.floor(Math.random() * numbers.length)];
+            } while (a === previousQuestion.a && b === previousQuestion.b);
+            
+            previousQuestion = { a: currentQuestion.a, b: currentQuestion.b };
             currentQuestion = { a, b };
             correctAnswer = a * b;
             
@@ -263,6 +308,13 @@
         }
 
         function inputNumber(num) {
+            // 啟動音效上下文（需要用戶互動）
+            if (audioContext.state === 'suspended') {
+                audioContext.resume();
+            }
+            
+            playKeySound();
+            
             if (currentAnswer.length < 3) {
                 currentAnswer += num.toString();
                 document.getElementById('answer-display').textContent = currentAnswer;
@@ -285,6 +337,12 @@
         }
 
         function clearAnswer() {
+            // 啟動音效上下文（需要用戶互動）
+            if (audioContext.state === 'suspended') {
+                audioContext.resume();
+            }
+            
+            playKeySound();
             currentAnswer = '';
             document.getElementById('answer-display').textContent = '?';
         }
@@ -296,6 +354,7 @@
             const feedback = document.getElementById('feedback');
             
             if (userAnswer === correctAnswer) {
+                playCorrectSound();
                 stats.correct++;
                 feedback.textContent = '正確！ ✓';
                 feedback.className = 'feedback correct show';
@@ -309,6 +368,7 @@
                     generateQuestion();
                 }, 1500);
             } else {
+                playIncorrectSound();
                 stats.incorrect++;
                 feedback.textContent = `錯誤！再試試看`;
                 feedback.className = 'feedback incorrect show';
@@ -318,9 +378,14 @@
                 // 答錯只清除答案，不跳題
                 setTimeout(() => {
                     feedback.className = 'feedback';
-                    clearAnswer();
+                    clearAnswerSilent();
                 }, 1500);
             }
+        }
+        
+        function clearAnswerSilent() {
+            currentAnswer = '';
+            document.getElementById('answer-display').textContent = '?';
         }
 
         function updateStats() {
@@ -339,9 +404,16 @@
                 checkAnswer();
             }
         });
+        
+        // 初始化音效上下文
+        document.addEventListener('click', function() {
+            if (audioContext.state === 'suspended') {
+                audioContext.resume();
+            }
+        }, { once: true });
 
         // 初始化
         generateQuestion();
     </script>
 </body>
-  </html>
+</html>
