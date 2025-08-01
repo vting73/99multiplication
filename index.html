@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>九九乘法練習</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            padding: 40px;
+            max-width: 800px;
+            width: 100%;
+            backdrop-filter: blur(10px);
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .title {
+            font-size: 2.5em;
+            color: #333;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .score {
+            font-size: 1.2em;
+            color: #666;
+            margin-bottom: 20px;
+        }
+
+        .main-content {
+            display: flex;
+            gap: 40px;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .question-area {
+            flex: 1;
+            text-align: center;
+            padding: 40px;
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            border-radius: 20px;
+            color: white;
+            box-shadow: 0 10px 30px rgba(240, 147, 251, 0.3);
+        }
+
+        .question {
+            font-size: 4em;
+            font-weight: bold;
+            margin-bottom: 20px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+        }
+
+        .answer-display {
+            font-size: 3em;
+            font-weight: bold;
+            min-height: 80px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 15px;
+            margin-top: 20px;
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            transition: all 0.3s ease;
+        }
+
+        .keypad-area {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .keypad {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .key {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 15px;
+            font-size: 2em;
+            font-weight: bold;
+            padding: 20px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .key:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.6);
+        }
+
+        .key:active {
+            transform: translateY(0);
+            box-shadow: 0 2px 10px rgba(102, 126, 234, 0.4);
+        }
+
+        .key.zero {
+            grid-column: span 2;
+        }
+
+        .control-buttons {
+            display: flex;
+            gap: 15px;
+        }
+
+        .clear-btn {
+            background: linear-gradient(135deg, #ff6b6b 0%, #ee5a52 100%);
+            color: white;
+            border: none;
+            border-radius: 15px;
+            font-size: 1.2em;
+            font-weight: bold;
+            padding: 15px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 5px 15px rgba(255, 107, 107, 0.4);
+        }
+
+        .clear-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(255, 107, 107, 0.6);
+        }
+
+        .feedback {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            padding: 30px 50px;
+            border-radius: 20px;
+            font-size: 2em;
+            font-weight: bold;
+            color: white;
+            z-index: 1000;
+            opacity: 0;
+            transition: all 0.5s ease;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+        }
+
+        .feedback.correct {
+            background: linear-gradient(135deg, #4ecdc4 0%, #44a08d 100%);
+            box-shadow: 0 10px 30px rgba(78, 205, 196, 0.5);
+        }
+
+        .feedback.incorrect {
+            background: linear-gradient(135deg, #ff6b6b 0%, #ee5a52 100%);
+            box-shadow: 0 10px 30px rgba(255, 107, 107, 0.5);
+        }
+
+        .feedback.show {
+            opacity: 1;
+            transform: translate(-50%, -50%) scale(1.1);
+        }
+
+        @media (max-width: 768px) {
+            .main-content {
+                flex-direction: column;
+                gap: 30px;
+            }
+            
+            .question {
+                font-size: 3em;
+            }
+            
+            .answer-display {
+                font-size: 2.5em;
+                min-height: 60px;
+            }
+            
+            .key {
+                font-size: 1.5em;
+                padding: 15px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1 class="title">九九乘法練習</h1>
+            <div class="score">
+                <span>正確: <span id="correct">0</span></span> | 
+                <span>錯誤: <span id="incorrect">0</span></span> | 
+                <span>題目: <span id="total">1</span></span>
+            </div>
+        </div>
+        
+        <div class="main-content">
+            <div class="question-area">
+                <div class="question" id="question">2 × 3 = ?</div>
+                <div class="answer-display" id="answer-display">?</div>
+            </div>
+            
+            <div class="keypad-area">
+                <div class="keypad">
+                    <button class="key" onclick="inputNumber(7)">7</button>
+                    <button class="key" onclick="inputNumber(8)">8</button>
+                    <button class="key" onclick="inputNumber(9)">9</button>
+                    <button class="key" onclick="inputNumber(4)">4</button>
+                    <button class="key" onclick="inputNumber(5)">5</button>
+                    <button class="key" onclick="inputNumber(6)">6</button>
+                    <button class="key" onclick="inputNumber(1)">1</button>
+                    <button class="key" onclick="inputNumber(2)">2</button>
+                    <button class="key" onclick="inputNumber(3)">3</button>
+                    <button class="key zero" onclick="inputNumber(0)">0</button>
+                    <button class="clear-btn" onclick="clearAnswer()">清除</button>
+                </div>
+                
+                <div class="control-buttons">
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="feedback" id="feedback"></div>
+
+    <script>
+        let currentAnswer = '';
+        let correctAnswer = 0;
+        let currentQuestion = { a: 6, b: 7 };
+        let stats = { correct: 0, incorrect: 0, total: 1 };
+
+        function generateQuestion() {
+            const numbers = [6, 7, 8, 9];
+            const a = numbers[Math.floor(Math.random() * numbers.length)];
+            const b = numbers[Math.floor(Math.random() * numbers.length)];
+            currentQuestion = { a, b };
+            correctAnswer = a * b;
+            
+            document.getElementById('question').textContent = `${a} × ${b} = ?`;
+            currentAnswer = '';
+            document.getElementById('answer-display').textContent = '?';
+        }
+
+        function inputNumber(num) {
+            if (currentAnswer.length < 3) {
+                currentAnswer += num.toString();
+                document.getElementById('answer-display').textContent = currentAnswer;
+                
+                // 自動檢查答案
+                if (currentAnswer.length > 0) {
+                    const userAnswer = parseInt(currentAnswer);
+                    if (userAnswer === correctAnswer || currentAnswer.length === correctAnswer.toString().length) {
+                        setTimeout(checkAnswer, 300);
+                    }
+                }
+            }
+        }
+
+        function deleteNumber() {
+            if (currentAnswer.length > 0) {
+                currentAnswer = currentAnswer.slice(0, -1);
+                document.getElementById('answer-display').textContent = currentAnswer || '?';
+            }
+        }
+
+        function clearAnswer() {
+            currentAnswer = '';
+            document.getElementById('answer-display').textContent = '?';
+        }
+
+        function checkAnswer() {
+            if (currentAnswer === '') return;
+            
+            const userAnswer = parseInt(currentAnswer);
+            const feedback = document.getElementById('feedback');
+            
+            if (userAnswer === correctAnswer) {
+                stats.correct++;
+                feedback.textContent = '正確！ ✓';
+                feedback.className = 'feedback correct show';
+                
+                // 答對才跳到下一題
+                stats.total++;
+                updateStats();
+                
+                setTimeout(() => {
+                    feedback.className = 'feedback';
+                    generateQuestion();
+                }, 1500);
+            } else {
+                stats.incorrect++;
+                feedback.textContent = `錯誤！再試試看`;
+                feedback.className = 'feedback incorrect show';
+                
+                updateStats();
+                
+                // 答錯只清除答案，不跳題
+                setTimeout(() => {
+                    feedback.className = 'feedback';
+                    clearAnswer();
+                }, 1500);
+            }
+        }
+
+        function updateStats() {
+            document.getElementById('correct').textContent = stats.correct;
+            document.getElementById('incorrect').textContent = stats.incorrect;
+            document.getElementById('total').textContent = stats.total;
+        }
+
+        // 鍵盤支援
+        document.addEventListener('keydown', function(event) {
+            if (event.key >= '0' && event.key <= '9') {
+                inputNumber(parseInt(event.key));
+            } else if (event.key === 'Delete' || event.key === 'Escape') {
+                clearAnswer();
+            } else if (event.key === 'Enter') {
+                checkAnswer();
+            }
+        });
+
+        // 初始化
+        generateQuestion();
+    </script>
+</body>
+  </html>
