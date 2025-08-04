@@ -200,6 +200,10 @@
             cursor: pointer;
             transition: all 0.3s ease;
             box-shadow: 0 5px 15px rgba(255, 107, 107, 0.4);
+            user-select: none;
+            -webkit-user-select: none;
+            -webkit-tap-highlight-color: transparent;
+            touch-action: manipulation;
         }
 
         .clear-btn:hover {
@@ -406,58 +410,27 @@
         let previousQuestion = { a: 0, b: 0 };
         let stats = { correct: 0, incorrect: 0, total: 1 };
         
-        // 創建音效（優化移動端相容性）
-        let audioContext;
+        // 創建音效（簡化版，避免移動端問題）
         let isAudioEnabled = false;
         
         function initAudio() {
-            try {
-                audioContext = new (window.AudioContext || window.webkitAudioContext)();
-                isAudioEnabled = true;
-            } catch (e) {
-                console.log('Audio not supported');
-                isAudioEnabled = false;
-            }
-        }
-        
-        function playBeep(frequency, duration, type = 'sine') {
-            if (!isAudioEnabled || !audioContext) return;
-            
-            try {
-                const oscillator = audioContext.createOscillator();
-                const gainNode = audioContext.createGain();
-                
-                oscillator.connect(gainNode);
-                gainNode.connect(audioContext.destination);
-                
-                oscillator.frequency.setValueAtTime(frequency, audioContext.currentTime);
-                oscillator.type = type;
-                
-                gainNode.gain.setValueAtTime(0.1, audioContext.currentTime);
-                gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + duration);
-                
-                oscillator.start(audioContext.currentTime);
-                oscillator.stop(audioContext.currentTime + duration);
-            } catch (e) {
-                // 忽略音效錯誤，繼續執行
-            }
+            // 暫時停用音效，專注解決按鍵問題
+            isAudioEnabled = false;
         }
         
         function playKeySound() {
-            playBeep(800, 0.1);
+            // 暫時停用音效
+            return;
         }
         
         function playCorrectSound() {
-            // 播放成功音效（上升音調）
-            playBeep(523, 0.2); // C5
-            setTimeout(() => playBeep(659, 0.2), 100); // E5
-            setTimeout(() => playBeep(784, 0.3), 200); // G5
+            // 暫時停用音效
+            return;
         }
         
         function playIncorrectSound() {
-            // 播放錯誤音效（下降音調）
-            playBeep(400, 0.3, 'sawtooth');
-            setTimeout(() => playBeep(300, 0.3, 'sawtooth'), 150);
+            // 暫時停用音效
+            return;
         }
 
         function getSelectedNumbers(type) {
@@ -514,18 +487,6 @@
         function inputNumber(num) {
             console.log('inputNumber called with:', num); // 調試用
             
-            // 啟動音效上下文（需要用戶互動）
-            if (isAudioEnabled && audioContext && audioContext.state === 'suspended') {
-                audioContext.resume().catch(e => console.log('Audio resume failed'));
-            }
-            
-            // 防止重複快速點擊
-            if (window.inputLocked) return;
-            window.inputLocked = true;
-            setTimeout(() => { window.inputLocked = false; }, 100);
-            
-            playKeySound();
-            
             if (currentAnswer.length < 3) {
                 currentAnswer += num.toString();
                 document.getElementById('answer-display').textContent = currentAnswer;
@@ -534,7 +495,7 @@
                 if (currentAnswer.length > 0) {
                     const userAnswer = parseInt(currentAnswer);
                     if (userAnswer === correctAnswer || currentAnswer.length === correctAnswer.toString().length) {
-                        setTimeout(checkAnswer, 500); // 增加延遲時間
+                        setTimeout(checkAnswer, 300);
                     }
                 }
             }
@@ -550,17 +511,6 @@
         function clearAnswer() {
             console.log('clearAnswer called'); // 調試用
             
-            // 防止重複快速點擊
-            if (window.clearLocked) return;
-            window.clearLocked = true;
-            setTimeout(() => { window.clearLocked = false; }, 100);
-            
-            // 啟動音效上下文（需要用戶互動）
-            if (isAudioEnabled && audioContext && audioContext.state === 'suspended') {
-                audioContext.resume().catch(e => console.log('Audio resume failed'));
-            }
-            
-            playKeySound();
             currentAnswer = '';
             document.getElementById('answer-display').textContent = '?';
         }
@@ -623,10 +573,20 @@
             }
         });
         
+        // 初始化
+        initAudio();
+        
         // 初始化音效上下文
         document.addEventListener('click', function() {
-            if (audioContext.state === 'suspended') {
-                audioContext.resume();
+            if (isAudioEnabled && audioContext && audioContext.state === 'suspended') {
+                audioContext.resume().catch(e => console.log('Audio resume failed'));
+            }
+        }, { once: true });
+
+        // 移動端專用：添加觸控事件監聽
+        document.addEventListener('touchstart', function() {
+            if (isAudioEnabled && audioContext && audioContext.state === 'suspended') {
+                audioContext.resume().catch(e => console.log('Audio resume failed'));
             }
         }, { once: true });
 
@@ -637,7 +597,7 @@
             }
         });
 
-        // 初始化
+        // 初始化遊戲
         generateQuestion();
     </script>
 </body>
